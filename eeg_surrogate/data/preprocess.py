@@ -47,7 +47,11 @@ def preprocess_subject(
 
     Returns ``None`` when the sequence is shorter than ``min_sequence_length``.
     """
-    timeseries = load_roi_timeseries(file_path)
+    timeseries = load_roi_timeseries(
+        file_path,
+        n_rois=config["n_rois"],
+        mat_variable=config.get("mat_variable", None),
+    )
     validate_timeseries_shape(timeseries, n_rois=config["n_rois"])
     if not ensure_min_length(timeseries, config.get("min_sequence_length", 0)):
         return None
@@ -73,11 +77,15 @@ def preprocess_subject(
 def preprocess_directory(data_root: str | Path, config: Dict) -> List[SubjectState]:
     """Preprocess all subject files in a directory.
 
-    The function scans for ``*.npy`` and ``*.npz`` files and aggregates
-    processed state sequences.
+    The function scans for ``*.npy``, ``*.npz`` and ``*.mat`` files and
+    aggregates processed state sequences.
     """
     data_root = Path(data_root)
-    files = sorted(list(data_root.glob("*.npy")) + list(data_root.glob("*.npz")))
+    files = sorted(
+        list(data_root.glob("*.npy"))
+        + list(data_root.glob("*.npz"))
+        + list(data_root.glob("*.mat"))
+    )
     subjects: List[SubjectState] = []
     for path in files:
         processed = preprocess_subject(path, config=config)

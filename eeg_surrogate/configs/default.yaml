@@ -5,6 +5,7 @@
 # -------- Paths --------
 data_root: "/path/to/roi_timeseries"
 processed_dir: "./processed_states"  # where preprocessed states are cached (.npy)
+mat_variable: null        # optional variable name when loading .mat files
 save_dir: "./checkpoints"
 log_dir: "./logs"
 
