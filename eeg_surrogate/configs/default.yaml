@@ -1,0 +1,65 @@
+# ===============================
+# EEG Surrogate Brain Config
+# ===============================
+
+# -------- Paths --------
+data_root: "/path/to/roi_timeseries"
+processed_dir: "./processed_states"  # where preprocessed states are cached (.npy)
+mat_variable: null        # optional variable name when loading .mat files
+save_dir: "./checkpoints"
+log_dir: "./logs"
+
+# -------- ROI / State --------
+n_rois: 100
+bands:
+  delta: [1, 4]
+  theta: [4, 8]
+  alpha: [8, 13]
+  beta:  [13, 30]
+  gamma: [30, 45]
+
+use_log_envelope: true      # log-transform envelope
+use_zscore: true            # z-score per subject
+envelope_method: "hilbert"
+
+# -------- Sampling --------
+raw_sampling_rate: 500      # Hz (set according to your data)
+target_sampling_rate: 25    # Hz after envelope extraction
+resample_method: "polyphase"
+
+# -------- Dataset slicing --------
+history_length: 16          # L (≈ 0.64s at 25 Hz)
+prediction_horizon: 4       # k (≈ 160 ms ahead)
+stride: 1                   # step size when slicing sequences
+min_sequence_length: 200    # discard too-short subjects
+
+# -------- Model --------
+model_type: "gru"
+input_dim: 500              # 100 ROIs × 5 bands
+hidden_dim: 256
+num_layers: 2
+dropout: 0.1
+bidirectional: false
+
+# -------- Training --------
+batch_size: 64
+num_epochs: 100
+learning_rate: 1e-3
+weight_decay: 1e-5
+optimizer: "adam"
+loss_type: "mse"
+
+# -------- Validation --------
+val_subject_ratio: 0.2
+shuffle_subjects: true
+seed: 42
+
+# -------- Hardware --------
+num_workers: 4
+pin_memory: true
+use_cuda: true
+
+# -------- Logging --------
+log_interval: 50
+save_best_only: true
+monitor_metric: "val_loss"
