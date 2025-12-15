@@ -16,15 +16,27 @@ from .utils import (
 
 
 class SubjectState:
-    """Container for a subject's processed state sequence."""
+    """Container for a subject's processed state sequence stored on disk.
 
-    def __init__(self, subject_id: str, states: np.ndarray):
+    States are stored in ``.npy`` format and loaded lazily via memory mapping
+    to avoid holding all subjects in memory simultaneously.
+    """
+
+    def __init__(self, subject_id: str, data_path: Path, length: int):
         self.subject_id = subject_id
-        self.states = states
+        self.data_path = Path(data_path)
+        self.length = length
+        self._cache: np.memmap | None = None
 
     def __len__(self) -> int:  # noqa: D401
         """Return the number of time points in the state sequence."""
-        return self.states.shape[0]
+        return self.length
+
+    def load_states(self) -> np.memmap:
+        """Load the subject states as a memory-mapped array."""
+        if self._cache is None:
+            self._cache = np.load(self.data_path, mmap_mode="r")
+        return self._cache
 
 
 def preprocess_subject(
@@ -50,7 +62,12 @@ def preprocess_subject(
         resample_method=config.get("resample_method", "polyphase"),
     )
     subject_id = file_path.stem
-    return SubjectState(subject_id=subject_id, states=states)
+
+    output_dir = Path(config.get("processed_dir", file_path.parent))
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / f"{subject_id}_states.npy"
+    np.save(output_path, states)
+    return SubjectState(subject_id=subject_id, data_path=output_path, length=states.shape[0])
 
 
 def preprocess_directory(data_root: str | Path, config: Dict) -> List[SubjectState]:

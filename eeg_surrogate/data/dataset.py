@@ -29,7 +29,7 @@ class BrainStateDataset(Dataset):
 
         self.sample_index: List[Tuple[int, int]] = []
         for subj_idx, subj in enumerate(self.subjects):
-            max_start = subj.states.shape[0] - (history_length + prediction_horizon)
+            max_start = len(subj) - (history_length + prediction_horizon)
             for start in range(0, max_start + 1, stride):
                 self.sample_index.append((subj_idx, start))
 
@@ -40,9 +40,10 @@ class BrainStateDataset(Dataset):
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor, Optional[str]]:
         subj_idx, start = self.sample_index[idx]
         subj = self.subjects[subj_idx]
+        states = subj.load_states()
         target_idx = start + self.history_length - 1 + self.prediction_horizon
-        history = subj.states[start : start + self.history_length]
-        target = subj.states[target_idx]
+        history = states[start : start + self.history_length]
+        target = states[target_idx]
         x = torch.from_numpy(history).float()
         y = torch.from_numpy(target).float()
         if self.return_subject_id:
